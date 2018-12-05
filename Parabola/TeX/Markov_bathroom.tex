@@ -1,4 +1,6 @@
 % !TeX spellcheck = en_GB
+\usetikzlibrary{automata, positioning}
+
 \section*{Mathematical Modelling: Using Markov chains to model bathroom queues}
 \vspace{-.30cm}
 
@@ -13,13 +15,277 @@
 
 You come home from your morning run all sweaty and ready for a shower. As you approach the bathroom, you see the locked door and roll your eyes. Standing in your sweat soaked singlet, your little brother pokes his head out of his bedroom, chucks a deodorant at you before telling you he had already called dibs on the bathroom after you sister is finished. You throw the deodorant back at him and curse your house for having so few bathrooms.
 
-Everyone has had to wait to use the bathroom at some point in their lives. It's common sense that the fewer bathrooms or more people there are, the longer the expected wait time. But how can we mathematically calculate how long we can expect to wait every day? One approach is with a technique called Markov chains.
+Everyone has had to wait to use the bathroom at some point in their lives. It's common sense that the fewer bathrooms or more people there are, the longer you'd have to wait. But can we mathematically calculate how long we can expect to wait every day? One approach is with a technique called Markov chains.
+
+For the rest of the article, let's consider the scenario where you have two bathroom between 4 people.
 
 \subsection*{Markov chains}
-Markov chains model the movement between some \textit{states} throughout \textit{time}, where the \textit{probability} of moving from state to state can be defined.
+To set up a Markov chain, you need several things: \textit{states} that represent the possible scenarios, \textit{probabilities} of moving from state to state throughout some measure of \textit{time}. We will unpack these 3 things in more detail below.
 
 \subsubsection*{States}
-A state is something that can describe the scenario we are interested in. For example, if we are interested in the weather, we could define 3 states: sunny, cloudy, raining.\\
-For our problemWe are interested in the 
+A state is something that can describe the situation of interest at different points in time. If we are interested in the performance of a soccer team. We can have three states representing the outcome of a team's most recent game: Win, Lose, and Draw.
+
+For our bathroom queueing problem, we are interested in how many people are using, or wanting to use, the bathroom at any point in time. So how many states do we need? Well with 4 people, there can be from 0 to 4 people wanting to use the bathroom, meaning we need 5 states. 
+
+Let's label each state $0, \cdots, 5$, where state 0 means no one is wanting to use the bathroom. State 4 means four people want to use the bathroom, since there is only one bathroom available, this means 1 person is using it and there are 3 queuing up.
 
 \subsubsection*{Time}
+Time can be either discrete or continuous. The difference is best explained with an example or each.
+
+\paragraph{Discrete time}
+In the soccer team scenario, time wouldn't be measured in hours or days, each time point would be discrete and states can only change after each game. 
+
+It is convention to start time at 0 and increment it by 1 as we reach the next discrete time point ($t=0, 1, 2, \cdots$) . We will represent the state at time $t$ as $X_t$.
+
+If the team wins its first two games and loses the third, this sequence would be described as
+$$ X_0 = \text{Win}, \, X_1 = \text{Win},\, X_2 = \text{Lose}$$
+
+\paragraph{Continuous time}
+We are all familiar with the concept of continuous time, it is how we perceive things everyday! Our Markov chain to model bathroom queues will use continuous time, because there is no obvious way to split real time into discrete chunks. 
+
+In the previous example of the soccer game, states only change after each game. But people can leave or queue for the bathroom any point in time, meaning the states can change at any point in time.
+
+\subsubsection*{Probability}
+For Markov chains, we need to define the probabilities of moving from each state to every state (including itself). These probabilities are represented as a matrix. The numbers in this matrix represent different things, depending on whether we are working with discrete or continuous time.
+
+A fundamental assumption of Markov chains is that the probability of moving from any state to the next is not impacted by any previous states, just the current one. This is called the \textbf{Markov property} and can be represented mathematically as:
+$$ \Pr(X_{t+h}|\{X_s: s \leq t\}) = \Pr(X_{t+h}|X_t) \quad \text{for} \quad h > 0$$
+If we take the current time to be $t$, the LHS of the above equation represents the probability of some future state given all previous states. The RHS represents the probability of the same future state but only given the current state, $t$. The fact that these probabilities are equal mean that any information about previous states has no impact on the direction of future states.
+
+
+\paragraph{Discrete time probability matrix}
+In discrete time, we need to describe the conditional probabilities of moving to every state given the current state. In other words, we need to define:
+$$ \Pr(X_{t+1} = j|X_t = i) \quad \text{for all} \quad i, j$$
+That is, the probability of moving to state $j$ given the current state is $i$. If $n$ is the number of states, then we need to provide $n^2$ probabilities. These are represented in the form of a $n\times n$ matrix, $P$ called the transition probability matrix.
+
+Each column and row represent a state, and each element of the matrix is the conditional probability of moving from the state represented by the row, to the state represented by the column. Let's look at the example with the soccer team.
+
+Suppose this soccer team is very streaky. If they won their last game, the probability of winning their next game is 80\%, and probability of losing their next game is 5\%. If they lost their last game, the probability of winning their next game is 30\%, and the probability of losing their next game is 60\%. And if they drew their last game, there is 25\% chance they win and 25\% chance they lose their next game.
+
+
+\begin{figure}[h]
+	\centering
+		\begin{tikzpicture}
+		% Node style
+		\tikzset{node style/.style={state,
+								minimum width=2cm,
+								line width=1mm}}
+							
+		% Draw nodes
+		\node[node style] at (0, 0) 		(W) {Win};
+		\node[node style] at (6, 0) 		(L) {Lose};
+		\node[node style] at (3, -5.196)	(D) {Draw};
+		
+		% Draw connectors
+		\draw[every loop,
+		auto=right,
+		line width=1mm,
+		>=latex
+		]
+		(W) edge[loop, out=100, in=160, 
+				looseness=5] 				node {0.80} (W)
+		(W) edge[bend right=25, auto=left] 	node {0.05} (L)
+		(W) edge[bend right=30] 			node {0.15} (D)
+		(L) edge[bend right=30] 			node {0.30} (W)
+		(L) edge[loop, out=80, in=20, 
+				looseness=5, auto=left]		node {0.60} (L)
+		(L) edge[bend right=25, auto=left] 	node {0.15} (D)
+		(D) edge[bend right=25, auto=left] 	node {0.25} (W)
+		(D) edge[bend right=25] 			node {0.25} (L)
+		(D) edge[loop, out=-60, in=-120, 
+				looseness=5, auto=left]		node {0.50} (D);
+		
+	\end{tikzpicture}
+	\caption{Visual representation of the soccer team's probabilities}
+	\label{fig: soccer team visual}
+\end{figure}
+
+Figure \ref{fig: soccer team visual} is a visual way of representing the above information, and is easier to digest. Figure \ref{fig: soccer team transition matrix} shows the probability transition matrix and is even more compact.
+
+\begin{figure}[H]
+	\centering
+	
+$$P=\bordermatrix{\text{State} 	&\text{Win} &\text{Lose}& \text{Draw}\cr
+			 	\text{Win} 	&   0.80  	&	0.05	&	0.15	\cr
+		 	 	\text{Lose}	& 	0.30  	&	0.60	&	0.10	\cr
+	 	 		\text{Draw}	&	0.25	&	0.25	&	0.50	}$$
+ 	 \caption{Transition probability matrix representing the soccer team's probabilities.}
+ 	 \label{fig: soccer team transition matrix}
+\end{figure}
+
+The rows and columns have been labelled to easily see what each number means. The element in the second row (Lose) first column (Win) is $0.30$, meaning there is a 30\% chance of winning the next game if the team had lost its last game.
+\\
+
+There are a few things to check when creating a probability transition matrix.
+\begin{itemize}
+	\item All entries are between 0 and 1 inclusive.\\
+	This is needed as each entry represents a probability
+	\item The sum of all rows is 1.\\
+	This ensure that the system can only transition between the defined states. The sum of the first row in figure \ref{fig: soccer team transition matrix} represents the probability that, given the team won its last game, it will either win, lose, or draw the next game. This is necessarily 1 as it includes all possible outcomes.
+\end{itemize}
+You can verify that both these conditions are satisfied in the above case.
+
+\paragraph{Continuous time rate matrix}
+In continuous time, the \textit{transition rates} from each state to all states must be defined. But what is a transition rate? Roughly speaking, it is the probability per time unit that the system makes a transition from one state to the other. 
+if $q_{ij}$ represents the transition rate from state $i$ to $j$, and if the current state is $i$, the probability that the state is $j$ after time $h$ has passed is roughly $h\times q_{ij}$ for small $h$
+$$ Pr(X_{t+h} = j|X_t = i) \approx h\times q_{ij} \qquad \text{for small } h$$
+
+More precisely,
+$$ q_{ij} = \lim_{h\rightarrow0}\frac{Pr(X_{t+h} = j | X_t = i)}{h} $$
+
+\begin{comment}
+	As you can imagine, the transition rate affects the expected time until the there is a transition. If the transition rate out of a state is $\lambda$, then the expected time until a transition is $\frac{1}{\lambda}$ time units.
+\\
+\end{comment}
+
+Of course, when we specify rates, we need to specify a standard unit of time. It doesn't mathematically matter what we choose, but to make life easier, let's express rates as \textit{per minute}.
+\\
+
+Let's consider a house of just one person. If the person is not currently in the bathroom, what is the transition rate of them going to the bathroom? A quick Google search suggests that people go to the toilet around 7 times a day. Taking into account time spent sleeping (approximated at 8 hours), that's a rate of 7 times per 16 hours, or $\frac{7}{(16 \times 60)} = 0.0073$ per minute. Denote this as $\lambda$.
+
+\begin{comment}
+	If a person is currently in the bathroom, what is the transition rate at which they get out? To get this rate, remember that the expected time spent in the bathroom would be the inverse of the transition rate. Let's assume that each toilet trip takes an average of 2 minutes, there is an average of one shower per day lasting 15 minutes (including drying), and a further 5 minutes a day spent brushing teeth and other grooming activities. That's an average of $7\times 2 + 15 + 5 = 34$ minutes per day, or about 5 minutes per trip\footnote{It isn't important what the exact numbers are since these are all approximations anyways. The purpose of this article is to describe an application of Markov chains, not to provide empirically accurate estimates.} (since we've assumed 7 trips per day). If we let $\mu$ denote the transition rate out of the bathroom, $\mu = \frac{1}{5} = 0.2 $
+\end{comment}
+
+A bathroom trip could be a quick wizz or a long shower. For simplicity, let's assume an average trip takes 5 minutes. This implies a certain transition rate of leaving the bathroom. In our Markov chain model, the transition rate out of a state is equal to the expected time spent in the state. If we let this transition rate be denoted by $\mu$, then $\mu = \frac{1}{5} = 0.2 $
+\\
+
+Now that we have estimates for $\lambda$ the rate of one person going to the bathroom, and $\mu$, the rate of one person leaving the bathroom, we can easily determine the transition rate between states. 
+
+\begin{figure}[H]
+	\centering
+	\begin{tikzpicture}
+	% Setup the style for the states
+	\tikzset{node style/.style={state, 
+			fill=gray!20!white}}
+	
+	\node[node style]               (0)   {0};
+	\node[node style, right=of 0]   (1)  {1};
+	\node[node style, right=of 1]  (2) {2};
+	\node[node style, right=of 2] (3)  {3};
+	\node[node style, right=of 3]  (4)   {4};
+	
+	\draw[>=latex,
+	auto=left,
+	every loop]
+	(0)   edge[bend left=20] node {$4\lambda$}     	(1)
+	(1)   edge[bend left=20] node {$\mu$}     		(0)
+	(1)   edge[bend left=20] node {$3\lambda$}     (2)
+	(2)   edge[bend left=20] node {$\mu$}     (1)
+	(2)   edge[bend left=20] node {$2\lambda$}     (3)
+	(3)   edge[bend left=20] node {$\mu$}     (2)
+	(3)   edge[bend left=20] node {$\lambda$}     (4)
+	(4)   edge[bend left=20] node {$\mu$}     (3);
+	
+	\end{tikzpicture}
+	\caption{Diagram showing transition rates between the 5 states.}
+	\label{fig: bathroom visual}
+\end{figure}
+
+In state 0, there are 4 people that can potentially need to use the bathroom, each with a transition rate of $\lambda$, meaning $q_{0, 1} = 4\lambda$. In state 1, there are only 3 people that could potentially transition, so $q_{1, 2} = 3\lambda$
+
+Using similar logic, we get the general expression:
+$$q_{i, i+1} = (4-i)\lambda \qquad \text{for } i < 4 $$
+
+What about the transition rates of leaving the bathroom? In any state apart from 0, one person is using the bathroom, and the rate of transition for that person is $\mu$, leaving us with 
+$$q_{i, i-1}=\mu \qquad \text{for } i > 0$$
+
+It is assumed that multiple people can't suddenly need to use the bathroom or leave the bathroom at the exact same time, so each state can only reach the state one above or below it, so:
+$$q_{i, j} = 0 \qquad \text{for } \abs{i-j}>1 $$
+
+$q_{i, i}$ represents the rate at which the state stays in the same state. This is the same as saying that the state does not transition to any other state, so it is the negative of the sum of all transition rates out of the state:
+$$q_{i, i} = -\sum_{j \neq i} q_{i, j} $$
+
+
+Using these three rules, we can now construct the transition rate matrix.
+$$
+Q=
+\bordermatrix{	\text{State} 	&\text{0} 	&\text{1}	& \text{2} 	& \text{3} 	& \text{4} \cr
+\text{0} 	& -4\lambda &	4\lambda	&	0 			& 0 			& 0	\cr
+\text{1} 	&   \mu  	&-(\mu+3\lambda)&3\lambda 		& 0 			& 0	\cr
+\text{2} 	&   0  		&	\mu			&-(\mu+2\lambda)&2\lambda 		& 0	\cr
+\text{3} 	&   0  		&	0			&	\mu 		&-(\mu+\lambda)	& \lambda\cr
+\text{4}	&	0		&	0			&	0			& \mu 			& -\mu}
+$$
+And after substituting $\mu = 0.2 $ and $\lambda = \frac{7}{(16 \times 60)} $, we get
+$$ Q=
+\begin{pmatrix}
+-0.029	&	0.029	&	0 		& 0 		& 0	\\
+0.2  	&	-0.222	& 0.022 	& 0 		& 0	\\
+0  		&	0.2		&-0.215		&0.015 		& 0	\\
+0  		&	0		&	0.2 	&-0.207		& 0.007\\
+0		&	0		&	0		& 0.2 		& -0.2
+\end{pmatrix}
+$$
+You can verify a few things about this transition matrix:
+\begin{itemize}
+	\item The sum of each row equals 0. This is because the "rate" at which the state stays the same is exactly negative of the sum of the rates at which the state leaves.
+	\item The only negative elements are on the diagonal. These represents the rate at which the state stays the same.
+\end{itemize}
+
+
+\subsubsection*{Long run proportions}
+Now that the system is fully described, it is time to think about our original problem. Living in a house of 4 people with 1 bathroom, what is the expected time one could expect to have to wait for the bathroom to be vacant each day? The states where someone is waiting to use the bathroom are states 2, 3 and 4, so let's start by calculating the proportion of time we expect this system to be in these states. To do this, we need to find the long run proportions of each state.
+
+Let $\pi_i$ represent the proportion of time the system is spend in state $i$ if run forever. Since these are proportions, we have $\sum\pi_i = 1$
+
+To work out these proportions, let's think about what it means to have something reach its long run proportions. What we're really saying is that the system has reached a kind of equilibrium and everything balances perfectly. In this context, balance can be represented as:
+$$ \pi_i  \times -q_{i, i} = \sum_{j \neq i} \pi_j \times q_{j, i} $$
+
+On the left hand side, we have the rate of transition OUT of state $ i $ as time goes to infinity. On the right, we have the rate of transition INTO state $ i $ as time goes to infinity. Equating these imply we have reached a sort of equilibrium.
+
+Another way of writing this is
+$$ 0 = \pi_i  \times q_{i, i} + \sum_{i \neq j} \pi_j \times q_{j, i} \qquad \text{for all  }i$$
+Now let's define the vector $\boldsymbol{\pi}= (\pi_0, \cdots, \pi_4)$. Another way to write the above equations is as a homogenous system of linear equations:
+$$ \boldsymbol{\pi}Q = \mathbf{0}$$
+Where we have the constraint $ \sum\pi_i = 1 $. Another way of writing this constraint is $\boldsymbol{\pi} \cdot \mathbf{1} = 1$ where $\mathbf{1}$ is a row vector of ones. Yet another way or writing this is
+$$\boldsymbol{\pi} E = \mathbf{1} $$
+Where $E$ is a 5 by 5 matrix whose elements are all 1, 
+$E = \begin{pmatrix}
+1		&	\dots	& 1\\
+\vdots	&	\ddots	& \vdots\\
+1		&	\dots	& 1
+
+\end{pmatrix}
+$
+It is then possible to solve by
+\begin{align*}
+	 \boldsymbol{\pi}Q &= \mathbf{0}\\
+	 \boldsymbol{\pi} E &= \mathbf{1}\\
+	 \boldsymbol{\pi} (Q + E) &= \mathbf{1}\\
+	 \boldsymbol{\pi} & =  \mathbf{1}(Q+E)^{-1}
+\end{align*}
+Computer packages can be used to solve
+\begin{align*}
+	(Q+E)^{-1} = \begin{pmatrix}
+	0.971	&	1.029	&	1 		& 1 		& 1	\\
+	1.2  	&	0.778	& 1.022 	& 1 		& 1	\\
+	1  		&	1.2		&0.785		&1.015 		& 1	\\
+	1  		&	1		&	1.2 	&0.793		& 1.007\\
+	1		&	1		&	1		& 1.2 		& 0.8
+	\end{pmatrix}^{-1}
+\end{align*}
+To get us to our answer:
+$$ \boldsymbol{\pi} = ( 8.599\times 10^{-1}, 1.254\times 10^{-1}, 1.372\times 10^{-2}, 1.000\times 10^{-3}, 3.646\times 10^{-5}) $$
+Meaning that 86 \% of the time, the bathrooms is empty, and 12.5 \% of the time, there is one person using a bathroom and no one waiting. You can verify that these proportions add up to very close to 1 (error coming from rounding).
+
+From this, we can sum $\pi_2 + \pi_3 + \pi_4$ to see that $1.48\%$ of the time, there is at least one person waiting to use the bathroom. Out of our 16 waking hours, this corresponds to about 14 minutes a day where at least one person is waiting to use the bathroom.
+
+It might be tempting to simply divide that number by 4, but it's not quite so simple. To demonstrate why, consider two people waiting. You start waiting at 12:00, and manage to go at 12:15, your brother starts waiting as 12:05 and manages to go at 12:20. You've each waited 15 minutes, but the total amount of minutes any person was waiting in the house is only 20 minutes. Although you were both waiting from 12:05 to 12:15, this measure doesn't double up the wait time.
+
+You must calculate the sum of everyone's wait time and divide it by the number of people. In the above example, we had 2 people waiting 15 minutes each, so the calculation would be (15 + 15)/2.
+\\
+
+To find the sum of everyone's waiting time, we notice that 1.372\% of the time, there is one person waiting, 0.1\% of the time, 2 people are waiting, and 0.003646\% of the time, 3 people are waiting. In other words, to get the sum of everyone's waiting time, we do
+$$ (1.372\% \times 1 + 0.1\% \times 2 + 0.003646\% \times 3) \times 16 \times 60 \div 4 = 3.8 $$
+Leaving each housemate with an expected 3.8 minutes (3 minutes 48 seconds) of waiting time per day.
+
+\subsubsection*{Limitations of the model}
+Now that there is a numeric answer to our question, it is important to look back on the process and acknowledge the limitations of our method.
+
+One of the main assumptions of Markov chains is the Markov property. This is also referred to as \textit{memoryless} andstates that it doesn't matter what's happened in the past, the behaviour of the system only depends on what the current state is. We've assumed that the expected time spent in the bathroom is 5 minutes. So as soon as someone walks in, it is expected they'll leave after 5 minutes. Under the Markov property, if someone has been in the bathroom for 10 minutes already, is is still expected that they will leave after another 5 minutes.
+
+Similarly, the rate at which someone goes to the bathroom stays the same regardless of if they've gone 10 times already today or haven't gone at all.
+\\
+
+While these assumptions may seem unrealistic at first, it isn't that unreasonable when you look at it's implications in aggregate. Markov chains, through their memorylessness, implicitly assume that the number of bathroom visits is Poisson distributed, and the time spend in the bathroom is Exponentially distributed. 

@@ -3,6 +3,8 @@
 % This is a template file for Parabola articles.
 % The main contents are given by the file ``sample_article.tex" inputted below.
 % - Thomas Britz 2018-11-23
+\usepackage{float}
+\usepackage{pythonhighlight}
 
 \usepackage{latexsym,amsthm,amssymb,amsmath,amsfonts,graphicx,palatino}
 \usepackage{fancybox,multicol,array,psfrag,longtable}
@@ -11,7 +13,7 @@
 \usepackage{bm}% bold math
 \usepackage{tikz}
 \usepackage{tikz-cd}
-\usetikzlibrary{calc,intersections,through,patterns}
+\usetikzlibrary{automata, positioning}
 
 \allowdisplaybreaks
 
@@ -172,7 +174,8 @@
 \begin{document}
 
 \noindent {\bf Parabola Volume XX, Issue X (2019)}
-\input{Markov_bathroom} %
-
+%\input{Markov_bathroom}
+\input{Markov_continuous} 
+%\input{Markov_discrete} 
 \end{document}
 
